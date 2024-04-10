@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo
+    container_name: mongodb
+    restart: always
+    command: --auth --config /etc/mongo/mongod.conf
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGO_INITDB_DATABASE: test3
+      TZ: Asia/Taipei
+    volumes: 
+      - ../database/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ../database/configdb:/data/configdb
+      - ../database/data:/data/db
+      - ../database/mongod.conf:/etc/mongo/mongod.conf
+    ports: 
+      - '27018:27017'

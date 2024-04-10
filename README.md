@@ -1,6 +1,6 @@
 # DA_Project
 
-## 如何使用
+## 如何執行試題1
 
 1. 首先，確保你已經在你的電腦上安裝了 Docker。如果沒有，請參考 [Docker 官方網站](https://docs.docker.com/get-docker/) 來獲取安裝說明。
 
@@ -18,7 +18,19 @@
 
     這個命令會在 Docker 容器中啟動 `test1.py` 。
 
-
+## 如何執行試題2
+1. 首先，執行先執行以下指令安裝所需套件。
+    ```bash
+    pip install -r requiments.txt
+    ```
+2. 然後到"試題3"中運行docker-compose.yml，利用docker建立Mongodb，一樣這裡需要安裝 Docker，可參考"試題1"至官方網站的安裝方式。
+    ```bash
+    docker-compose -f docker-compose up -d
+    ```
+3. 直接執行Python腳本即可"CSV2JSON.csv"資料轉換成Json格式，並且寫入Mongodb。
+    ```bash
+    python test2.py
+    ```
 ## 注意事項
 
 - 請確保你的 Docker 版本符合要求，並且已經正確安裝了 Docker。

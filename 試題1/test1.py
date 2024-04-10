@@ -14,8 +14,23 @@ from webdriver_manager.chrome import ChromeDriverManager
 import logging
 
 class AddressFetcher:
+    """
+    AddressFetcher類別用於從網站上擷取地址資訊。
 
-    def __init__(self,url) -> None:
+    Attributes:
+        url (str): 目標網站的URL。
+        logger (Logger): 設定好的日誌記錄器。
+        chrome_options (Options): Chrome瀏覽器的選項設置。
+        browser (WebDriver): Selenium瀏覽器實例。
+        ocr (DdddOcr): 用於驗證碼識別的OCR工具。
+    """
+    def __init__(self, url: str) -> None:
+        """
+        初始化AddressFetcher。
+
+        Args:
+            url (str): 目標網站的URL。
+        """
         self.logger = self.setup_logger()
         self.chrome_options = Options()
         service = Service(executable_path=ChromeDriverManager().install())
@@ -33,6 +48,12 @@ class AddressFetcher:
         
     
     def setup_logger(self):
+        """
+        設定Log記錄器。
+
+        Returns:
+            Logger: 設定好的Logger。
+        """
         logger = logging.getLogger(__name__)
         logger.setLevel(logging.DEBUG)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
@@ -42,29 +63,35 @@ class AddressFetcher:
         return logger
     
     def open_website(self):
+        """
+        打開目標網站。
+        """
         self.browser.get(self.url)
 
     def select_location_and_date(self):
-        # Click the button
+        """
+        選擇位置和日期。
+        """
+        # 點擊按鈕
         element = self.browser.find_element(By.XPATH,"/html/body/div[1]/div[4]/div/div/form/div[1]/fieldset/div/div[1]/button")
         element.click()
         time.sleep(1)
-        # Click on the map for Taoyuan
+        # 點擊地圖上的桃園
         area_element = self.browser.find_element(By.XPATH,'//*[@id="mapForm"]/div/fieldset/div[3]/map/area[2]')
         area_element.click()
         time.sleep(1)
-        # Select Taoyuan city
+        # 選取桃園區
         areacode_dropdown = self.browser.find_element(By.XPATH,'//*[@id="areaCode"]')
         areacode_select = Select(areacode_dropdown)
         areacode_select.select_by_value("68000010")
         time.sleep(1)
-        # Set start date (民國年)
+        # 設定開始時間 (民國年)
         self.browser.execute_script("document.getElementById('sDate').removeAttribute('readonly')")
         date_input = self.browser.find_element(By.ID,'sDate')
         date_input.clear()  
         date_input.send_keys("111-01-01")#因為固定從這時間開始，如果要特別計算的話再改
         time.sleep(1)
-        # Set end date (民國年)
+        # 設定結束時間 (民國年)
         now_date = datetime.now()
         self.browser.execute_script("document.getElementById('eDate').removeAttribute('readonly')")
         date_input = self.browser.find_element(By.ID,'eDate')
@@ -72,20 +99,23 @@ class AddressFetcher:
         date_input.send_keys(f"{now_date.year-1911}-{now_date.month:02d}-{now_date.day:02d}")
 
     def fetch_addresses(self):
+        """
+        從網站上擷取地址。
+        """
         while True:
-            # If no captcha error popup appears, continue with captcha recognition and input
+            #找到驗證碼框並且將圖片輸入到OCR模組中
             captcha_image = self.browser.find_element(By.XPATH,'//*[@id="captchaImage_captchaKey"]')
             captcha_image_binary = captcha_image.screenshot_as_png
             image = Image.open(io.BytesIO(captcha_image_binary))
             result = self.ocr.classification(image)
             self.logger.info(f"current catcha : {result}")
             time.sleep(2)
-            # Input captcha
+            # 驗證碼填入驗證碼輸入框
             captcha_input = self.browser.find_element(By.XPATH,'//*[@id="captchaInput_captchaKey"]')
             captcha_input.clear()  
             captcha_input.send_keys(result)
             time.sleep(2)
-            # Click search
+            # 點擊搜尋按鈕
             search_button = self.browser.find_element(By.XPATH,'//*[@id="goSearch"]')
             search_button.click()
             time.sleep(3)
@@ -100,6 +130,9 @@ class AddressFetcher:
                 break
 
     def fetch_addresses_from_all_pages(self):
+        """
+        從所有頁面上擷取地址。
+        """
         while True:
             try:
                 time.sleep(1)
@@ -114,7 +147,13 @@ class AddressFetcher:
                 break
 
     def process_table(self,page,csv_name):
+        """
+        處理表格並將其寫入CSV文件。
 
+        Args:
+            page (str): 當前頁面的HTML源碼。
+            csv_name (str): 要寫入的CSV文件名。
+        """
         tables = pd.read_html(page)
         df = tables[1][1:]
         df[0] = df[0].astype(int)
@@ -122,6 +161,9 @@ class AddressFetcher:
         df.to_csv(csv_name, mode='a', header=False, index=False)
 
     def close_browser(self):
+        """
+        關閉瀏覽器。
+        """
         self.browser.quit()
 
 if __name__ == "__main__":
