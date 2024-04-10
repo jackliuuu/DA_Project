@@ -1,6 +1,6 @@
 import pandas as pd
 import pymongo
-
+from pymongo.errors import BulkWriteError
 class CSVToJsonConverter:
     def __init__(self, csv_file):
         """
@@ -97,11 +97,16 @@ class MongoWriter:
         Parameters:
             data (list): 包含要寫入的數據的列表。
         """
-        db = self.client[self.db_name]
-        collection = db[self.collection_name]
-        print(f"開始寫入資料至 db: {self.db_name}, collection: {self.collection_name}")
-        collection.insert_many(data)
-        print("寫入完畢")
+        try:
+            db = self.client[self.db_name]
+            collection = db[self.collection_name]
+            print(f"開始寫入資料至 db: {self.db_name}, collection: {self.collection_name}")
+            collection.insert_many(data)
+            print("寫入完畢")
+        except BulkWriteError:
+            print("_id已存在，不進行寫入。")
+        finally:
+            self.client.close()
 
 if __name__ =="__main__":
     csv_file = 'CSV2JSON.csv'
